@@ -333,24 +333,46 @@ agent, if any, is driving the client. This distinguishes agent-mediated usage of
 `client.env.agent` is a single string. Its value is determined by the environment variables below. Drivers MUST evaluate
 the list in order. The first populated variable determines the value, and subsequent entries MUST NOT be considered.
 
-| Order | Environment Variable | `client.env.agent` value |
-| ----- | -------------------- | ------------------------ |
-| 1     | `AI_AGENT`           | The value of `AI_AGENT`  |
-| 2     | `AGENT`              | The value of `AGENT`     |
-| 3     | `CLAUDECODE`         | `claude-code`            |
-| 4     | `CURSOR_AGENT`       | `cursor`                 |
-| 5     | `GEMINI_CLI`         | `gemini-cli`             |
-| 6     | `CODEX_SANDBOX`      | `codex`                  |
-| 7     | `AUGMENT_AGENT`      | `augment`                |
-| 8     | `OPENCODE_CLIENT`    | `opencode`               |
+| Order | Environment Variable     | `client.env.agent` value |
+| ----- | ------------------------ | ------------------------ |
+| 1     | `CLAUDECODE`             | `claude_code`            |
+| 2     | `CLAUDE_CODE_ENTRYPOINT` | `claude_code`            |
+| 3     | `CURSOR_AGENT`           | `cursor`                 |
+| 4     | `CODEX_SANDBOX`          | `codex_cli`              |
+| 5     | `CLINE_ACTIVE`           | `cline`                  |
+| 6     | `GEMINI_CLI`             | `gemini_cli`             |
+| 7     | `AUGMENT_AGENT`          | `auggie_cli`             |
+| 8     | `OPENCODE_CLIENT`        | `opencode_client`        |
+| 9     | `TRAE_AI_SHELL_ID`       | `trae_ai`                |
+| 10    | `GOOSE_TERMINAL`         | `goose`                  |
+| 11    | `GOOSE_AGENT`            | `goose`                  |
+| 12    | `AI_AGENT`               | See below.               |
 
-For entries 1 and 2, `client.env.agent` is the value of the environment variable. For entries 3 through 8,
-`client.env.agent` is the fixed string in the table above, regardless of the value of the environment variable.
+For entries 1 through 11, `client.env.agent` is the fixed string in the table above, regardless of the value of the
+environment variable. These variables identify a known agent, so the agent name does not depend on the value.
 
-A variable is considered populated if it is present in the environment with a non-empty value. If none of the variables
-above are populated, `client.env.agent` MUST be entirely omitted.
+Entry 12, `AI_AGENT`, is a generic variable that any agent may set. It is evaluated last so that a known agent is always
+reported under its fixed name. Its value is normalized as follows:
+
+- If the normalized value is `1` or `true`, `client.env.agent` MUST be the fixed string `ai_agent`. These values
+    identify an agent without naming it.
+- Otherwise, `client.env.agent` MUST be the normalized value.
+
+Normalization consists of removing leading and trailing whitespace and converting the value to lowercase. Drivers MUST
+normalize the value of `AI_AGENT` before they use it. Drivers MUST truncate the normalized value to 64 characters if it
+is longer. Agents may include version information in this value, so the value is not a fixed set of strings.
+
+A variable is considered populated if it is present in the environment and its value is non-empty after normalization. A
+variable whose value consists only of whitespace is therefore not populated. If none of the variables above are
+populated, `client.env.agent` MUST be omitted.
 
 Determination of `client.env.agent` MUST NOT cause a user-visible error.
+
+> [!NOTE]
+> This list of environment variables and agent names matches the detection that
+> [mongosh](https://github.com/mongodb-js/mongosh) implements. Drivers and the shell therefore report the same agent
+> under the same name. New agents are expected to appear over time. Drivers MUST NOT add entries to this list on their
+> own; the list is extended by a change to this specification.
 
 ##### Container
 
@@ -499,9 +521,12 @@ if necessary. Implementers SHOULD cumulatively update fields in the following or
 limit:
 
 1. Omit fields from `env` except `env.name` and `env.agent`.
-2. Omit fields from `os` except `os.type`.
-3. Omit the `env` document entirely.
-4. Truncate `platform`.
+2. Omit `env.agent`.
+3. Omit fields from `os` except `os.type`.
+4. Omit the `env` document entirely.
+5. Truncate `platform`.
+
+`env.agent` is omitted before `env.name` because drivers have reported `env.name` since before `env.agent` existed.
 
 Additionally, implementers are encouraged to place high priority information about the platform earlier in the string,
 in order to avoid possible truncating of those details.
@@ -584,7 +609,7 @@ support the `hello` command, the `helloOk: true` argument is ignored and the leg
 
 ## Changelog
 
-- 2026-07-22: Add `env.agent` to `client` document for agentic client identification.
+- 2026-09-22: Add `env.agent` to `client` document for agentic client identification.
 - 2026-06-25: Clarify the client backpressure component of the handshake.
 - 2026-06-17: Remove pre-4.2 version references.
 - 2026-06-11: Clarify that there is no new behavior as a result of only using OP_MSG for all handshakes.

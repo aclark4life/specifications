@@ -88,51 +88,64 @@ the following sets of environment variables:
 Drivers that capture values for `client.env` should test that a connection and hello command succeed in the presence of
 the following sets of environment variables, and that `client.env.agent` is populated (or omitted) as described.
 
-1. Generic agent via `AI_AGENT`. `client.env.agent` MUST equal `custom-agent`.
-
-    | Environment Variable | Value          |
-    | -------------------- | -------------- |
-    | `AI_AGENT`           | `custom-agent` |
-
-2. Generic agent via `AGENT`. `client.env.agent` MUST equal `custom-agent`.
-
-    | Environment Variable | Value          |
-    | -------------------- | -------------- |
-    | `AGENT`              | `custom-agent` |
-
-3. Known agent. `client.env.agent` MUST equal `claude-code`.
+1. Known agent. `client.env.agent` MUST equal `claude_code`.
 
     | Environment Variable | Value |
     | -------------------- | ----- |
     | `CLAUDECODE`         | `1`   |
 
-4. Precedence - generic wins over known. `client.env.agent` MUST equal `custom-agent` (the value of `AI_AGENT`), not
-    `claude-code`.
+2. Known agent, fixed name. `client.env.agent` MUST equal `cursor`, regardless of the value of the environment
+    variable.
 
-    | Environment Variable | Value          |
-    | -------------------- | -------------- |
-    | `AI_AGENT`           | `custom-agent` |
-    | `CLAUDECODE`         | `1`            |
+    | Environment Variable | Value           |
+    | -------------------- | --------------- |
+    | `CURSOR_AGENT`       | `some-value-42` |
 
-5. Precedence - first known wins. `client.env.agent` MUST equal `cursor`.
+3. Precedence - first known agent wins. `client.env.agent` MUST equal `cursor`, not `gemini_cli`.
 
     | Environment Variable | Value |
     | -------------------- | ----- |
     | `CURSOR_AGENT`       | `1`   |
     | `GEMINI_CLI`         | `1`   |
 
-6. Empty value is treated as unset. `client.env.agent` MUST be omitted. If no other `client.env` fields are populated,
-    `client.env` MUST be entirely omitted.
+4. Precedence - a known agent wins over the generic variable. `client.env.agent` MUST equal `claude_code`, not
+    `custom-agent`.
 
-    | Environment Variable | Value               |
-    | -------------------- | ------------------- |
-    | `AI_AGENT`           | `""` (empty string) |
+    | Environment Variable | Value          |
+    | -------------------- | -------------- |
+    | `AI_AGENT`           | `custom-agent` |
+    | `CLAUDECODE`         | `1`            |
 
-7. No agent variables. None of the environment variables in the `client.env.agent` table are set. `client.env.agent`
+5. Generic agent with a descriptive value. `client.env.agent` MUST equal `custom-agent`.
+
+    | Environment Variable | Value          |
+    | -------------------- | -------------- |
+    | `AI_AGENT`           | `custom-agent` |
+
+6. Generic agent with a boolean value. `client.env.agent` MUST equal `ai_agent`.
+
+    | Environment Variable | Value  |
+    | -------------------- | ------ |
+    | `AI_AGENT`           | `true` |
+
+7. Generic agent, normalization. `AI_AGENT` is set to `Claude-Code_2-1-238_Agent` with one leading space and one
+    trailing space. The value is converted to lowercase and leading and trailing whitespace is removed, so
+    `client.env.agent` MUST equal `claude-code_2-1-238_agent`.
+
+8. Generic agent, truncation. `AI_AGENT` is set to a value of 100 characters. `client.env.agent` MUST equal the first
+    64 characters of that value.
+
+9. Empty value is treated as unset. `AI_AGENT` is set to an empty string. `client.env.agent` MUST be omitted. If no
+    other `client.env` fields are populated, `client.env` MUST be entirely omitted.
+
+10. Whitespace-only value is treated as unset. `AI_AGENT` is set to `"   "` (three space characters). `client.env.agent`
     MUST be omitted.
 
-8. Agent alongside FaaS. This test MUST verify that both the AWS Lambda metadata and `client.env.agent` (equal to
-    `claude-code`) are present in `client.env`.
+11. No agent variables. None of the environment variables in the `client.env.agent` table are set. `client.env.agent`
+    MUST be omitted.
+
+12. Agent alongside FaaS. This test MUST verify that both the AWS Lambda metadata and `client.env.agent` (equal to
+    `claude_code`) are present in `client.env`.
 
     | Environment Variable | Value              |
     | -------------------- | ------------------ |
