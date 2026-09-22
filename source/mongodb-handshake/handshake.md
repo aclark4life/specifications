@@ -360,7 +360,9 @@ reported under its fixed name. Its value is normalized as follows:
 
 Normalization consists of removing leading and trailing whitespace and converting the value to lowercase. Drivers MUST
 normalize the value of `AI_AGENT` before they use it. Drivers MUST truncate the normalized value to 64 characters if it
-is longer. Agents may include version information in this value, so the value is not a fixed set of strings.
+is longer. Agents may include version information in this value, so the value is not a fixed set of strings. Entries 1
+through 11 report a name from the table above, but a value derived from `AI_AGENT` is reported by the agent itself and
+is therefore not generically queryable.
 
 A variable is considered populated if it is present in the environment and its value is non-empty after normalization. A
 variable whose value consists only of whitespace is therefore not populated. If none of the variables above are
