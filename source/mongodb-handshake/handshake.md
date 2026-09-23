@@ -535,7 +535,7 @@ if necessary. Implementers SHOULD cumulatively update fields in the following or
 limit:
 
 1. Omit fields from `env` except `env.name` and `env.agent`.
-2. Omit `env.agent`.
+2. Omit `env.agent`. If `env` then has no remaining fields, omit `env` entirely.
 3. Omit fields from `os` except `os.type`.
 4. Omit the `env` document entirely.
 5. Truncate `platform`.
