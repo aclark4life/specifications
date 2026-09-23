@@ -384,9 +384,9 @@ Determination of `client.env.agent` MUST NOT cause a user-visible error.
 > under the same name. New agents will appear over time. Drivers MUST NOT add entries on their own; a change to this
 > specification extends the list.
 >
-> Normalization of `AI_AGENT` does not yet match mongosh, which keeps whitespace, reports a whitespace-only value, and
-> does not truncate. mongosh is expected to adopt the behavior above; see
-> [MONGOSH-3696](https://jira.mongodb.org/browse/MONGOSH-3696).
+> Normalization of `AI_AGENT` does not match mongosh, which keeps whitespace, reports a whitespace-only value, and does
+> not truncate. [MONGOSH-3696](https://jira.mongodb.org/browse/MONGOSH-3696) proposes that mongosh adopt the behavior
+> above.
 
 ##### Container
 
