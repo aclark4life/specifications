@@ -385,7 +385,8 @@ Determination of `client.env.agent` MUST NOT cause a user-visible error.
 > specification extends the list.
 >
 > Normalization of `AI_AGENT` does not yet match mongosh, which keeps whitespace, reports a whitespace-only value, and
-> does not truncate. mongosh is expected to adopt the behavior above; see MONGOSH-XXX.
+> does not truncate. mongosh is expected to adopt the behavior above; see
+> [MONGOSH-3696](https://jira.mongodb.org/browse/MONGOSH-3696).
 
 ##### Container
 
