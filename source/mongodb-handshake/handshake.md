@@ -327,11 +327,11 @@ field to be omitted and MUST NOT cause a user-visible error.
 ##### Agent
 
 Agents are AI coding assistants and agentic clients, such as Claude Code, Cursor, and Gemini CLI. Most agents set an
-environment variable when they execute shell commands or code on a user's behalf. `client.env.agent` captures which
-agent, if any, is driving the client. This distinguishes agent-mediated usage of MongoDB from direct human usage.
+environment variable when they run shell commands or code for a user. `client.env.agent` records which agent, if any,
+drives the client. This distinguishes agent-mediated use of MongoDB from direct human use.
 
-`client.env.agent` is a single string. Its value is determined by the environment variables below. Drivers MUST evaluate
-the list in order. The first populated variable determines the value, and subsequent entries MUST NOT be considered.
+`client.env.agent` is a single string. The environment variables below determine its value. Drivers MUST evaluate the
+list in order. The first populated variable determines the value. Drivers MUST NOT consider later entries.
 
 | Order | Environment Variable     | `client.env.agent` value |
 | ----- | ------------------------ | ------------------------ |
@@ -348,33 +348,44 @@ the list in order. The first populated variable determines the value, and subseq
 | 11    | `GOOSE_AGENT`            | `goose`                  |
 | 12    | `AI_AGENT`               | See below.               |
 
-For entries 1 through 11, `client.env.agent` is the fixed string in the table above, regardless of the value of the
-environment variable. These variables identify a known agent, so the agent name does not depend on the value.
+For entries 1 through 11, `client.env.agent` is the fixed string in the table, whatever the value of the populated
+variable. These variables identify a known agent, so the name does not depend on the value.
 
-Entry 12, `AI_AGENT`, is a generic variable that any agent may set. It is evaluated last so that a known agent is always
-reported under its fixed name. Its value is normalized as follows:
+Entry 12, `AI_AGENT`, is a generic variable that any agent may set. It is evaluated last, so a known agent is always
+reported under its fixed name. Normalize its value, then:
 
 - If the normalized value is `1` or `true`, `client.env.agent` MUST be the fixed string `ai_agent`. These values
     identify an agent without naming it.
 - Otherwise, `client.env.agent` MUST be the normalized value.
 
-Normalization consists of removing leading and trailing whitespace and converting the value to lowercase. Drivers MUST
-normalize the value of `AI_AGENT` before they use it. Drivers MUST truncate the normalized value to 64 characters if it
-is longer. Agents may include version information in this value, so the value is not a fixed set of strings. Entries 1
-through 11 report a name from the table above, but a value derived from `AI_AGENT` is reported by the agent itself and
-is therefore not generically queryable.
+Normalization removes leading and trailing whitespace and converts the value to lowercase. Drivers MUST then truncate
+the value to the largest valid UTF-8 prefix of 64 bytes or fewer. Drivers MUST drop a character that does not fit.
+Drivers MUST NOT split a character or replace one with U+FFFD.
 
-A variable is considered populated if it is present in the environment and its value is non-empty after normalization. A
-variable whose value consists only of whitespace is therefore not populated. If none of the variables above are
-populated, `client.env.agent` MUST be omitted.
+`AI_AGENT` is the only entry whose value is reported, and therefore the only unbounded one. The 64-byte limit stops a
+long value from costing both `client.env.agent` and other fields under [Limitations](#limitations).
+
+> [!NOTE]
+> Truncation at a fixed byte count splits a character if the limit falls inside one, and some string APIs then
+> substitute U+FFFD, which is lossy and longer than the bytes it replaces. Use an API that truncates on a character
+> boundary, or walk back from byte 64 to the start of the character that contains it.
+
+Agents may include version information in this value, so it is not a fixed set of strings. Entries 1 through 11 report a
+name from the table, but an agent reports its own `AI_AGENT` value, which is therefore not generically queryable.
+
+A variable is populated if it is present and non-empty after normalization. A whitespace-only value is therefore not
+populated. If no variable above is populated, `client.env.agent` MUST be omitted.
 
 Determination of `client.env.agent` MUST NOT cause a user-visible error.
 
 > [!NOTE]
-> This list of environment variables and agent names matches the detection that
-> [mongosh](https://github.com/mongodb-js/mongosh) implements. Drivers and the shell therefore report the same agent
-> under the same name. New agents are expected to appear over time. Drivers MUST NOT add entries to this list on their
-> own; the list is extended by a change to this specification.
+> The variables above, and the names they map to, match the detection that
+> [mongosh](https://github.com/mongodb-js/mongosh) implements, so drivers and the shell report the same known agent
+> under the same name. New agents will appear over time. Drivers MUST NOT add entries on their own; a change to this
+> specification extends the list.
+>
+> Normalization of `AI_AGENT` does not yet match mongosh, which keeps whitespace, reports a whitespace-only value, and
+> does not truncate. mongosh is expected to adopt the behavior above; see MONGOSH-XXX.
 
 ##### Container
 

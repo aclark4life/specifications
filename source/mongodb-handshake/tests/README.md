@@ -94,8 +94,7 @@ the following sets of environment variables, and that `client.env.agent` is popu
     | -------------------- | ----- |
     | `CLAUDECODE`         | `1`   |
 
-2. Known agent, fixed name. `client.env.agent` MUST equal `cursor`, regardless of the value of the environment
-    variable.
+2. Known agent, fixed name. `client.env.agent` MUST equal `cursor`, whatever the value of the variable.
 
     | Environment Variable | Value           |
     | -------------------- | --------------- |
@@ -128,24 +127,28 @@ the following sets of environment variables, and that `client.env.agent` is popu
     | -------------------- | ------ |
     | `AI_AGENT`           | `true` |
 
-7. Generic agent, normalization. `AI_AGENT` is set to `Claude-Code_2-1-238_Agent` with one leading space and one
-    trailing space. The value is converted to lowercase and leading and trailing whitespace is removed, so
-    `client.env.agent` MUST equal `claude-code_2-1-238_agent`.
+7. Generic agent, boolean value with whitespace. `AI_AGENT` is set to `true` with one leading and one trailing space.
+    The value is normalized before it is compared, so `client.env.agent` MUST equal `ai_agent`.
 
-8. Generic agent, truncation. `AI_AGENT` is set to a value of 100 characters. `client.env.agent` MUST equal the first
-    64 characters of that value.
+8. Generic agent, normalization. `AI_AGENT` is set to `Claude-Code_2-1-238_Agent` with one leading and one trailing
+    space. `client.env.agent` MUST equal `claude-code_2-1-238_agent`.
 
-9. Empty value is treated as unset. `AI_AGENT` is set to an empty string. `client.env.agent` MUST be omitted. If no
-    other `client.env` fields are populated, `client.env` MUST be entirely omitted.
+9. Generic agent, truncation. `AI_AGENT` is set to 100 `a` characters. `client.env.agent` MUST equal the first 64 of
+    them.
 
-10. Whitespace-only value is treated as unset. `AI_AGENT` is set to `"   "` (three space characters). `client.env.agent`
-    MUST be omitted.
+10. Generic agent, truncation on a character boundary. `AI_AGENT` is set to 63 `a` characters followed by `é` (U+00E9),
+    two bytes in UTF-8. The 64-byte limit falls inside `é`, so `client.env.agent` MUST equal the 63 `a` characters. It
+    MUST NOT contain any part of `é` or a replacement character (U+FFFD).
 
-11. No agent variables. None of the environment variables in the `client.env.agent` table are set. `client.env.agent`
-    MUST be omitted.
+11. Empty value is unset. `AI_AGENT` is set to an empty string. `client.env.agent` MUST be omitted. If no other
+    `client.env` fields are populated, `client.env` MUST be omitted entirely.
 
-12. Agent alongside FaaS. This test MUST verify that both the AWS Lambda metadata and `client.env.agent` (equal to
-    `claude_code`) are present in `client.env`.
+12. Whitespace-only value is unset. `AI_AGENT` is set to `"   "` (three spaces). `client.env.agent` MUST be omitted.
+
+13. No agent variables. No variable in the `client.env.agent` table is set. `client.env.agent` MUST be omitted.
+
+14. Agent alongside FaaS. This test MUST verify that the AWS Lambda metadata and `client.env.agent` (equal to
+    `claude_code`) are both present in `client.env`.
 
     | Environment Variable | Value              |
     | -------------------- | ------------------ |
